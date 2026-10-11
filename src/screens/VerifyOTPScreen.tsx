@@ -18,7 +18,7 @@ export default function VerifyOTPScreen() {
 
 	const handleVerify = async (): Promise<void> => {
 		try {
-			const response = await fetch('http://192.168.1.137/api/register/verify', {
+			const response = await fetch('http://192.168.0.68/api/register/verify', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ export default function VerifyOTPScreen() {
 			if (response.ok) {
 				const data = await response.json();
 				await SecureStore.setItemAsync('vendor_token', data.token);
-				navigation.navigate('Map');
+				navigation.navigate('VendorDashboard');
 				return;
 			}
 

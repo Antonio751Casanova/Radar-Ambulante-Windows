@@ -17,7 +17,7 @@ export default function LoginScreen() {
 
 	const handleRegister = async (): Promise<void> => {
 		try {
-			const response = await fetch('http://192.168.1.137/api/register/vendor', {
+			const response = await fetch('http://192.168.0.68/api/register/vendor', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
