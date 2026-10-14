@@ -8,18 +8,18 @@ export default function RoleSelectScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🔥 Radar Ambulante</Text>
+      <Text style={styles.title}>Radar Ambulante</Text>
       <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate('CustomerMap')}
       >
-        <Text style={styles.buttonText}>🍧 Quiero un antojo (Cliente)</Text>
+        <Text style={styles.buttonText}>Quiero un antojo (Cliente)</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button, styles.vendorButton]}
         onPress={() => navigation.navigate('Login')}
       >
-        <Text style={styles.buttonText}>🛒 Soy Vendedor</Text>
+        <Text style={styles.buttonText}>Soy Vendedor</Text>
       </TouchableOpacity>
     </View>
   );
