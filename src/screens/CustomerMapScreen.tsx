@@ -21,7 +21,7 @@ import VendorBottomSheet from '../components/VendorBottomSheet';
 import { DEFAULT_MAP_REGION, MOCK_VENDORS } from '../data/mockVendors';
 import type { Vendor, VendorCoordinate } from '../types/vendor';
 
-const ORDER_ENDPOINT = 'http://192.168.0.68:8000/api/pedidos';
+const ORDER_ENDPOINT = 'http://192.168.0.68/api/pedidos';
 
 const initialCoordinates = MOCK_VENDORS.reduce<Record<string, VendorCoordinate>>(
   (coordinates, vendor) => {

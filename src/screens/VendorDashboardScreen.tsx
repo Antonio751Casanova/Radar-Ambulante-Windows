@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Linking, Alert } from 'react-native';
 import MapView, { Circle, Polyline, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { calculateVendorTrip, getSnappedHotStreet } from '../utilidades/osrmTripService';
+
+const ORDERS_ENDPOINT = 'http://192.168.0.68/api/pedidos';
 
 const customMapStyle = [
   { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
@@ -43,7 +45,7 @@ const timeScenarios: any = {
   },
 };
 
-const directOrders = [
+const INITIAL_DIRECT_ORDERS = [
   { id: 'pedido_1', name: 'Carlos M.', phone: '5218331112233', address: 'Calle Universidad de Veracruz 104', reference: 'Casa blanca con portón negro', product: '1x Trole grande', latitude: 22.2530, longitude: -97.8740 },
   { id: 'pedido_2', name: 'Ana P.', phone: '5218334445566', address: 'Circuito Universitario 502', reference: 'Edificio verde, timbre 3', product: '2x Troles', latitude: 22.2490, longitude: -97.8780 }
 ];
@@ -106,10 +108,70 @@ export default function VendorDashboardScreen() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [routeData, setRouteData] = useState<{ path: {latitude: number, longitude: number}[], eta: number } | null>(null);
 
+  const [orders, setOrders] = useState<any[]>(INITIAL_DIRECT_ORDERS);
+  const knownOrderIdsRef = useRef<Set<string>>(
+    new Set(INITIAL_DIRECT_ORDERS.map((o) => o.id))
+  );
+
   const [isMegaRouteActive, setIsMegaRouteActive] = useState(false);
   const [megaRouteData, setMegaRouteData] = useState<any>(null);
   const [isLoadingMegaRoute, setIsLoadingMegaRoute] = useState(false);
   const [snappedHotStreets, setSnappedHotStreets] = useState<any[]>([]);
+
+  // Listener en tiempo real para nuevos pedidos desde el Backend
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchActiveOrders = async () => {
+      try {
+        const response = await fetch(ORDERS_ENDPOINT);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (!isMounted || !Array.isArray(data.orders)) return;
+
+        const incomingOrders = data.orders;
+        let newestOrder: any = null;
+
+        for (const order of incomingOrders) {
+          if (!knownOrderIdsRef.current.has(order.id)) {
+            knownOrderIdsRef.current.add(order.id);
+            if (!newestOrder) {
+              newestOrder = order;
+            }
+          }
+        }
+
+        if (incomingOrders.length > 0) {
+          setOrders([...incomingOrders, ...INITIAL_DIRECT_ORDERS]);
+        }
+
+        if (newestOrder) {
+          Alert.alert(
+            '🛎️ ¡Nuevo Pedido en Vivo!',
+            `${newestOrder.product}\n📍 ${newestOrder.address}`,
+            [
+              { text: 'Cerrar', style: 'cancel' },
+              {
+                text: 'Ver Pedido',
+                onPress: () => setSelectedItem({ type: 'order', data: newestOrder }),
+              },
+            ]
+          );
+        }
+      } catch (error) {
+        // Silencioso en caso de parpadeo de red local
+      }
+    };
+
+    void fetchActiveOrders();
+    const intervalId = setInterval(fetchActiveOrders, 2500);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, []);
 
   useEffect(() => {
     setSelectedItem(null);
@@ -277,7 +339,7 @@ export default function VendorDashboardScreen() {
           </Marker>
         ))}
 
-        {directOrders.map((order) => (
+        {orders.map((order) => (
           <Marker 
             key={order.id} 
             coordinate={{ latitude: order.latitude, longitude: order.longitude }} 
@@ -405,7 +467,7 @@ export default function VendorDashboardScreen() {
                 <Text style={styles.clientName}>👤 {selectedItem.data.name}</Text>
                 <Text style={styles.productBadge}>Venta Segura</Text>
               </View>
-              <Text style={styles.sectionTitle}>📍 Dirección:</Text>
+              <Text style={styles.sectionTitle}>📍 Dirección / Referencia:</Text>
               <Text style={styles.addressText}>{selectedItem.data.address}</Text>
               <Text style={styles.sectionTitle}>🛍️ Pedido:</Text>
               <Text style={styles.productText}>{selectedItem.data.product}</Text>
